@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { SectionTitle } from "../components";
 import { NewsItem } from "../data/types";
 import { api } from "../api";
-import { BG, BLUE, COLORS } from "../theme";
+import { COLORS, BG, BLUE } from "../theme";
 
 export const NewsScreen = ({ navigation }: any) => {
   const [news, setNews]       = useState<NewsItem[]>([]);
@@ -14,33 +14,54 @@ export const NewsScreen = ({ navigation }: any) => {
     api.getNews().then(setNews).finally(() => setLoading(false));
   }, []);
 
+  const handleLike = async (item: NewsItem) => {
+    if (liked[item.id]) return;
+    setLiked(p => ({ ...p, [item.id]: true }));
+    try {
+      const updated = await api.likeNews(item.id);
+      setNews(prev => prev.map(n => n.id === item.id ? updated : n));
+    } catch {
+      setLiked(p => ({ ...p, [item.id]: false }));
+    }
+  };
+
   if (loading) return <ActivityIndicator style={s.loader} size="large" color={BLUE} />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: BG }}>
-      <Text style={s.appTitle}>Identities</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: BG }} showsVerticalScrollIndicator={false}>
       <View style={s.listPad}>
-        <SectionTitle>一覧</SectionTitle>
-        {news.map((item, i) => (
+        <SectionTitle>最新ニュース</SectionTitle>
+        {news.map((item) => (
           <TouchableOpacity
             key={item.id}
             onPress={() => navigation.navigate("NewsDetail", { item })}
-            style={[s.newsRow, i < news.length - 1 && s.newsBorder]}
-            activeOpacity={0.7}
+            activeOpacity={0.85}
           >
-            <View style={[s.thumbnail, { backgroundColor: item.color }]}>
-              <Text style={{ fontSize: 26 }}>📰</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.newsTitle}>{item.title}</Text>
-              <View style={s.newsFooter}>
-                <Text style={s.time}>{item.time}</Text>
-                <TouchableOpacity onPress={() => setLiked(p => ({ ...p, [item.id]: !p[item.id] }))}>
-                  <Text style={s.likeText}>❤️ いいね{item.likes + (liked[item.id] ? 1 : 0)}</Text>
-                </TouchableOpacity>
+            <View style={s.card}>
+              {/* サムネイル */}
+              {item.image_url ? (
+                <Image source={{ uri: item.image_url }} style={s.thumbnail} />
+              ) : (
+                <View style={[s.thumbnail, { backgroundColor: item.color }]}>
+                  <Text style={s.thumbnailEmoji}>📰</Text>
+                </View>
+              )}
+              {/* コンテンツ */}
+              <View style={s.cardBody}>
+                <Text style={s.newsTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={s.cardFooter}>
+                  <Text style={s.time}>{item.time}</Text>
+                  <TouchableOpacity onPress={() => handleLike(item)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <View style={[s.likeChip, liked[item.id] && s.likeChipActive]}>
+                      <Text style={[s.likeText, liked[item.id] && s.likeTextActive]}>
+                        ♥  {item.likes}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
+              <Text style={s.chevron}>›</Text>
             </View>
-            <Text style={s.chevron}>›</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -49,15 +70,26 @@ export const NewsScreen = ({ navigation }: any) => {
 };
 
 const s = StyleSheet.create({
-  loader:    { flex: 1, marginTop: 80 },
-  appTitle:  { fontSize: 22, fontWeight: "800", textAlign: "center", paddingTop: 16, paddingBottom: 8, letterSpacing: 0.5 },
-  listPad:   { padding: 16 },
-  newsRow:   { flexDirection: "row", gap: 12, paddingBottom: 14, marginBottom: 14, alignItems: "flex-start" },
-  newsBorder:{ borderBottomWidth: 1, borderBottomColor: "#E8E8E8" },
-  thumbnail: { width: 90, height: 68, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  newsTitle: { fontSize: 13, fontWeight: "600", lineHeight: 19, marginBottom: 8, flex: 1 },
-  newsFooter:{ flexDirection: "row", alignItems: "center", gap: 14 },
-  time:      { fontSize: 12, color: BLUE },
-  likeText:  { fontSize: 12, color: COLORS.like },
-  chevron:   { color: BLUE, fontSize: 22, marginLeft: 4 },
+  loader:        { flex: 1, marginTop: 80 },
+  listPad:       { padding: 16, paddingTop: 20 },
+
+  card:          {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: "#fff", borderRadius: 16, padding: 12, marginBottom: 12,
+    shadowColor: "#116DFF", shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+  },
+  thumbnail:     { width: 88, height: 66, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  thumbnailEmoji:{ fontSize: 28 },
+  cardBody:      { flex: 1, gap: 8 },
+  newsTitle:     { fontSize: 13, fontWeight: "700", lineHeight: 19, color: COLORS.text },
+  cardFooter:    { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  time:          { fontSize: 11, color: COLORS.subText },
+
+  likeChip:      { flexDirection: "row", alignItems: "center", backgroundColor: COLORS.primaryLight, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 20 },
+  likeChipActive:{ backgroundColor: "#FFEEF5" },
+  likeText:      { fontSize: 12, fontWeight: "600", color: COLORS.primary },
+  likeTextActive:{ color: COLORS.like },
+
+  chevron:       { color: COLORS.gray, fontSize: 20, marginLeft: 2 },
 });

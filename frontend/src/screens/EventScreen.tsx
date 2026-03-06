@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet
 import { Card, SectionTitle } from "../components";
 import { Event } from "../data/types";
 import { api } from "../api";
-import { BG, BLUE } from "../theme";
+import { BG, COLORS } from "../theme";
 
 export const EventScreen = ({ navigation }: any) => {
   const [events, setEvents]   = useState<Event[]>([]);
@@ -14,38 +14,42 @@ export const EventScreen = ({ navigation }: any) => {
     api.getEvents().then(setEvents).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <ActivityIndicator style={s.loader} size="large" color={BLUE} />;
+  if (loading) return <ActivityIndicator style={s.loader} size="large" color={COLORS.primary} />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: BG }}>
-      <View style={s.header}>
-        <Text style={s.appTitle}>Identities</Text>
-        <SectionTitle>Events</SectionTitle>
-        <View style={s.tabRow}>
-          {(["upcoming", "all"] as const).map((t, i) => (
-            <TouchableOpacity key={t} onPress={() => setTab(t)} style={[s.tabBtn, tab === t && s.tabBtnActive]}>
-              <Text style={[s.tabLabel, tab === t && s.tabLabelActive]}>{i === 0 ? "開催予定" : "すべてのイベント"}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+    <ScrollView style={{ flex: 1, backgroundColor: BG }} showsVerticalScrollIndicator={false}>
+      {/* タブ */}
+      <View style={s.tabBar}>
+        {(["upcoming", "all"] as const).map((t, i) => (
+          <TouchableOpacity key={t} onPress={() => setTab(t)} style={[s.tabBtn, tab === t && s.tabBtnActive]}>
+            <Text style={[s.tabLabel, tab === t && s.tabLabelActive]}>{i === 0 ? "開催予定" : "すべて"}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
+
       <View style={s.listPad}>
+        <SectionTitle>イベント一覧</SectionTitle>
         {events.map(ev => (
           <View key={ev.id} style={s.timelineRow}>
-            <View style={s.timelineDot} />
-            <View style={{ flex: 1 }}>
+            <View style={s.timelineTrack}>
+              <View style={[s.timelineDot, { backgroundColor: ev.accent || COLORS.primary }]} />
+              <View style={s.timelineLine} />
+            </View>
+            <View style={{ flex: 1, paddingBottom: 20 }}>
               <Text style={s.evDate}>{ev.date}</Text>
-              <Text style={s.evTitle}>{ev.title}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate("EventDetail", { event: ev })} activeOpacity={0.8}>
+              <TouchableOpacity onPress={() => navigation.navigate("EventDetail", { event: ev })} activeOpacity={0.85}>
                 <Card style={{ padding: 14 }}>
-                  <Text style={s.evMeta}>開催時刻：{ev.time}</Text>
-                  <View style={s.evFooter}>
-                    <Text style={s.evMeta}>主催：{ev.organizer}</Text>
-                    <Text style={{ color: BLUE, fontSize: 20 }}>›</Text>
+                  <Text style={s.evTitle}>{ev.title}</Text>
+                  <View style={s.evMetaRow}>
+                    <Text style={s.evMeta}>🕐 {ev.time}</Text>
+                    <Text style={s.evMeta}>👤 {ev.organizer}</Text>
                   </View>
-                  <View style={[s.regBtn, { backgroundColor: ev.registered ? "#E8F5E9" : "#E3F2FD" }]}>
-                    <Text style={[s.regText, { color: ev.registered ? "#2E7D32" : BLUE }]}>
-                      {ev.registered ? "✓ 参加登録済" : "参加登録する"}
+                  <View style={[s.regBtn, ev.registered
+                    ? { backgroundColor: "#E8F5E9", borderColor: "#A5D6A7" }
+                    : { backgroundColor: COLORS.primaryLight, borderColor: COLORS.primary }
+                  ]}>
+                    <Text style={[s.regText, { color: ev.registered ? "#2E7D32" : COLORS.primary }]}>
+                      {ev.registered ? "✓ 参加登録済み" : "参加登録する →"}
                     </Text>
                   </View>
                 </Card>
@@ -59,21 +63,26 @@ export const EventScreen = ({ navigation }: any) => {
 };
 
 const s = StyleSheet.create({
-  loader:      { flex: 1, marginTop: 80 },
-  appTitle:    { fontSize: 22, fontWeight: "800", textAlign: "center", paddingTop: 16, paddingBottom: 8, letterSpacing: 0.5 },
-  header:      { backgroundColor: "#fff", paddingHorizontal: 16, paddingBottom: 0 },
-  listPad:     { padding: 16 },
-  tabRow:      { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#E0E0E0" },
-  tabBtn:      { flex: 1, paddingVertical: 10, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabBtnActive:{ borderBottomColor: BLUE },
-  tabLabel:    { fontSize: 14, fontWeight: "700", color: "#999" },
-  tabLabelActive:{ color: BLUE },
-  timelineRow: { flexDirection: "row", gap: 14, marginBottom: 24 },
-  timelineDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: "#A0A0A0", marginTop: 4 },
-  evDate:      { fontSize: 13, color: "#9E9E9E", marginBottom: 4 },
-  evTitle:     { fontSize: 16, fontWeight: "700", marginBottom: 8 },
-  evMeta:      { fontSize: 13, color: "#555", marginBottom: 4 },
-  evFooter:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  regBtn:      { marginTop: 10, paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8, alignSelf: "flex-start" },
-  regText:     { fontSize: 12, fontWeight: "600" },
+  loader:        { flex: 1, marginTop: 80 },
+
+  tabBar:        { flexDirection: "row", backgroundColor: "#fff", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: "#F0F0F5" },
+  tabBtn:        { paddingVertical: 8, paddingHorizontal: 18, borderRadius: 20, marginRight: 8, backgroundColor: COLORS.background },
+  tabBtnActive:  { backgroundColor: COLORS.primary },
+  tabLabel:      { fontSize: 13, fontWeight: "600", color: COLORS.subText },
+  tabLabelActive:{ color: "#fff" },
+
+  listPad:       { padding: 16, paddingTop: 20 },
+
+  timelineRow:   { flexDirection: "row", gap: 14 },
+  timelineTrack: { alignItems: "center", width: 18 },
+  timelineDot:   { width: 14, height: 14, borderRadius: 7, marginTop: 20 },
+  timelineLine:  { flex: 1, width: 2, backgroundColor: "#E8EAF0", marginTop: 4 },
+
+  evDate:        { fontSize: 12, color: COLORS.subText, fontWeight: "600", marginBottom: 6, letterSpacing: 0.5 },
+  evTitle:       { fontSize: 15, fontWeight: "800", color: COLORS.text, marginBottom: 8, lineHeight: 22 },
+  evMetaRow:     { flexDirection: "row", gap: 16, marginBottom: 10 },
+  evMeta:        { fontSize: 12, color: COLORS.subText },
+
+  regBtn:        { borderWidth: 1.5, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14, alignSelf: "flex-start" },
+  regText:       { fontSize: 13, fontWeight: "700" },
 });

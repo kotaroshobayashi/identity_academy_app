@@ -24,12 +24,13 @@ export interface Event {
 }
 
 export interface NewsItem {
-  id:    number;
-  title: string;
-  time:  string;
-  likes: number;
-  color: string;
-  body:  string;
+  id:        number;
+  title:     string;
+  time:      string;
+  likes:     number;
+  color:     string;
+  body:      string;
+  image_url?: string;
 }
 
 export interface Profile {
