@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Expo Web)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--prefix", "frontend", "expo", "start", "--web", "--port", "8081"],
+      "port": 8081
+    },
+    {
+      "name": "Backend (API Server)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend", "run", "dev"],
+      "port": 3001
+    }
+  ]
+}
