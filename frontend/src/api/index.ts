@@ -9,9 +9,24 @@
 import { Member, Event, NewsItem, Profile } from "../data/types";
 import Constants from "expo-constants";
 
-// Expo Go実行時はhostUriからIPを取得、それ以外はlocalhost
-const host = Constants.expoConfig?.hostUri?.split(":")[0] ?? "localhost";
-const API_BASE = `http://${host}:3001/api`;
+// API URLを決定する優先順位:
+//   1. EXPO_PUBLIC_API_URL 環境変数（.env で手動設定）
+//   2. Expo GoのdebuggerHost（実機接続時にIPを自動取得）
+//   3. localhost（Expo Web / ブラウザ）
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  const debuggerHost = (Constants.expoGoConfig as any)?.debuggerHost
+    ?? Constants.expoConfig?.hostUri;
+  if (debuggerHost) {
+    const ip = debuggerHost.split(":")[0];
+    return `http://${ip}:3001/api`;
+  }
+  return "http://localhost:3001/api";
+}
+
+const API_BASE = getApiBase();
 
 // ── 汎用fetch（エラーハンドリング共通化）
 async function fetchApi<T>(path: string): Promise<T> {
