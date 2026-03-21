@@ -13,14 +13,14 @@ import { SettingScreen }      from "../screens/SettingScreen";
 import { MemberDetailScreen } from "../screens/MemberDetailScreen";
 import { EventDetailScreen }  from "../screens/EventDetailScreen";
 import { NewsDetailScreen }   from "../screens/NewsDetailScreen";
-import { BLUE } from "../theme";
+import { COLORS } from "../theme";
 
-// ── タブ定義（タブを増やしたい時はここに追加するだけ）
+// ── タブ定義
 const TABS = [
-  { id: "news",    label: "News",    icon: "📋", Screen: NewsScreen },
-  { id: "event",   label: "Event",   icon: "📆", Screen: EventScreen },
-  { id: "member",  label: "Member",  icon: "👥", Screen: MemberScreen },
-  { id: "setting", label: "Setting", icon: "⚙️", Screen: SettingScreen },
+  { id: "news",    label: "タイムライン", icon: "📰", Screen: NewsScreen },
+  { id: "event",   label: "イベント",     icon: "🗓",  Screen: EventScreen },
+  { id: "member",  label: "メンバー",     icon: "👥", Screen: MemberScreen },
+  { id: "setting", label: "マイページ",   icon: "👤", Screen: SettingScreen },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -31,22 +31,34 @@ const MainTabs = ({ navigation }: any) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <StatusBar barStyle="dark-content" />
+      {/* ブランドヘッダー */}
+      <View style={s.brandHeader}>
+        <View style={s.brandLogoMark} />
+        <Text style={s.brandName}>
+          Identity<Text style={s.brandAccent}> Academy</Text>
+        </Text>
+      </View>
       <View style={{ flex: 1, overflow: "hidden" }}>
         <ActiveScreen navigation={navigation} />
       </View>
+      {/* ボトムナビ */}
       <View style={s.bottomNav}>
-        {TABS.map(tab => (
-          <TouchableOpacity key={tab.id} onPress={() => setActiveTab(tab.id)} style={s.navItem}>
-            <Text style={{ fontSize: 22 }}>{tab.icon}</Text>
-            <Text style={[s.navLabel, activeTab === tab.id && s.navLabelActive]}>{tab.label}</Text>
-          </TouchableOpacity>
-        ))}
+        {TABS.map(tab => {
+          const active = activeTab === tab.id;
+          return (
+            <TouchableOpacity key={tab.id} onPress={() => setActiveTab(tab.id)} style={s.navItem}>
+              <Text style={[s.navIcon, active && s.navIconActive]}>{tab.icon}</Text>
+              <Text style={[s.navLabel, active && s.navLabelActive]}>{tab.label}</Text>
+              {active && <View style={s.navDot} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </SafeAreaView>
   );
 };
 
-// ── スタックナビゲーター（画面遷移の設定）
+// ── スタックナビゲーター
 const Stack = createNativeStackNavigator();
 
 export const AppNavigator = () => (
@@ -54,8 +66,9 @@ export const AppNavigator = () => (
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: "#fff" },
-        headerTintColor: BLUE,
-        headerTitleStyle: { fontWeight: "700" },
+        headerTintColor: COLORS.primary,
+        headerTitleStyle: { fontWeight: "700", color: COLORS.text },
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen name="Main"         component={MainTabs}          options={{ headerShown: false }} />
@@ -67,8 +80,18 @@ export const AppNavigator = () => (
 );
 
 const s = StyleSheet.create({
-  bottomNav:     { flexDirection: "row", backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: "#E8E8E8", paddingBottom: 4 },
-  navItem:       { flex: 1, alignItems: "center", paddingTop: 10, paddingBottom: 6 },
-  navLabel:      { fontSize: 11, color: "#BDBDBD", marginTop: 2 },
-  navLabelActive:{ color: BLUE, fontWeight: "700" },
+  // ブランドヘッダー
+  brandHeader:   { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 12, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#F0F0F5" },
+  brandLogoMark: { width: 8, height: 24, backgroundColor: COLORS.primary, borderRadius: 4, marginRight: 8 },
+  brandName:     { fontSize: 18, fontWeight: "900", color: COLORS.text, letterSpacing: 0.3 },
+  brandAccent:   { fontSize: 18, fontWeight: "400", color: COLORS.primary },
+
+  // ボトムナビ
+  bottomNav:      { flexDirection: "row", backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: "#F0F0F5", paddingBottom: 4 },
+  navItem:        { flex: 1, alignItems: "center", paddingTop: 8, paddingBottom: 4 },
+  navIcon:        { fontSize: 20, opacity: 0.4 },
+  navIconActive:  { opacity: 1 },
+  navLabel:       { fontSize: 10, color: COLORS.gray, marginTop: 2 },
+  navLabelActive: { color: COLORS.primary, fontWeight: "700" },
+  navDot:         { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 3 },
 });
